@@ -1,5 +1,7 @@
-﻿using FluentAssertions;
+﻿using FakeItEasy;
+using FluentAssertions;
 using FluentAssertions.Extensions;
+using NetworkUtility.DNS;
 using NetworkUtility.Ping;
 using System;
 using System.Collections.Generic;
@@ -13,16 +15,21 @@ namespace NetworkUtility.Tests.PingTests
     public class NetworkServiceTests
     {
         private readonly NetworkService _networkService;
+        private readonly IDNS _dNS;
         public NetworkServiceTests()
         {
+            //Dependencies ， 不想實際連接到資料庫等，用FakeitEasy取代要注入的Service或Repository -> 想想後應該跟手動做另一物件替代差不多。就是要能動態return資料，可能也跟deligate差不多?
+            _dNS = A.Fake<IDNS>(); // A : FakeitEasy Method
+
             //SUT : System Under Test, 也能是此測試class下大家都會用到的物件?來讓程式碼簡潔
             //Arrange - variables, classes, mocks            
-            _networkService = new NetworkService();
+            _networkService = new NetworkService(_dNS); //做作出來的Dependencies來讓SUT能測試，類似幫你動態做個假物件送進去
         }
         [Fact] //Xunit 檢測是否要測試的屬性
         public void NetworkService_SendPing_ReturnString()
         {
             //Arrange - variables, classes, mocks
+            A.CallTo(()=>_dNS.SendDNS()).Returns(true); //幫假物件設定return值 => 設記測試案例
 
             //Act
             var result = _networkService.SendPing();
